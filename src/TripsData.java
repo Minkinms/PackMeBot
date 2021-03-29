@@ -2,42 +2,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class TripsData {
-    public static void main(String[] args) throws IOException {
-        String tripHistoryPath = "C:\\Java\\Progwards\\PackMe\\src\\TripHistory.txt";
-        TripsData tripsData = new TripsData(tripHistoryPath);
-//        tripsData.getTingsList();
-//        System.out.println(tripsData.getFrequentDirectionSet(3));
-//        tripsData.getAllTrips();
-//        for(UserTrip userTrip:tripsData.allTrips){System.out.println(userTrip);}
-//
-//        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
-//        LocalDateTime dateTrip = LocalDateTime.now();
-//        System.out.println(LocalDateTime.now().toString());
-//        System.out.println(dateTimeFormatter.format(dateTrip));
-//        String str = dateTimeFormatter.format(LocalDateTime.now());
-//        System.out.println(str);
-
-        List<Thing> testThingList = new ArrayList<>();
-        testThingList.add(new Thing("Блокнот", "Документы"));
-        testThingList.add(new Thing("Визитка", "свое"));
-        tripsData.writeTrip(new UserTrip("Москва", "Кремль", testThingList));
-
-        System.out.println("------------------------------------------------------------");
-        tripsData.getAllTrips();
-        for(UserTrip userTrip:tripsData.allTrips){System.out.println(userTrip);}
-
-    }
-
-    String tripHistoryPath;     //Путь к файлу истории поездок
+    //Переменные класса
+    String tripHistoryPath;                         //Путь к файлу истории поездок
     List<UserTrip> allTrips = new ArrayList<>();    //Полный список поездок
-    DateTimeFormatter dateTimeFormatter =  DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
 
     //Конструктор
     public TripsData(String tripHistoryPath) throws FileNotFoundException {
@@ -46,7 +19,7 @@ public class TripsData {
     }
 
     //Метод для получения множества всех поездок истории
-    public void getAllTrips() throws FileNotFoundException {
+    private void getAllTrips() throws FileNotFoundException {
         this.allTrips.clear();
         File tripHistoryFile = new File(tripHistoryPath);
         Scanner scanner = new Scanner(tripHistoryFile);
@@ -56,34 +29,17 @@ public class TripsData {
                 String[] arrayTripLine = line.split(",");
                 String[] arrayDirection = arrayTripLine[1].split("/");
                 allTrips.add(new UserTrip(arrayDirection[0].trim(),             //Direction
-                                         arrayDirection[1].trim(),              //Correction
-                                         getTripThingsList(arrayTripLine)));    //UserTripThingsList
+                        arrayDirection[1].trim(),              //Correction
+                        getTripThingsList(arrayTripLine)));    //UserTripThingsList
             }
         }
         scanner.close();
-
-/*        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            if (!line.isBlank() && line.startsWith("tr")) {
-                String[] arrayDirectionLine = line.split(",");
-                arrayDirection = arrayDirectionLine[1].split("/");
-                readThings = true;
-            }else {
-                if (!line.isBlank() && !line.startsWith("tr") && readThings) {
-                    allTrips.add(new UserTrip(arrayDirection[0].trim(),
-                            arrayDirection[1].trim(),
-                            getThingsList(line)));
-                    readThings = false;
-                }
-            }
-        }*/
     }
 
     //Метод для получения списка вещей.
     // Источник - массив строк, полученный из строки поездки, считанной из файла всех поездок
-    public List<Thing> getTripThingsList(String[] arrayTripLine) {
+    private List<Thing> getTripThingsList(String[] arrayTripLine) {
         List<Thing> thingsList = new ArrayList<>();
-//        String[] arrayThings = allThingsString.split(",");
         for (int i = 3; i < arrayTripLine.length; i++) {
             StringTokenizer tokenizer = new StringTokenizer(arrayTripLine[i].trim(), "()");
             List<String> textParts = new ArrayList<>();
@@ -118,7 +74,7 @@ public class TripsData {
     }
 
     //Метод для добавления поездки в список
-    public void addTrip(List<Trip> tripList, Trip addTrip){
+    private void addTrip(List<Trip> tripList, Trip addTrip) {
         if (tripList.contains(addTrip)) {
             int count = tripList.get(tripList.indexOf(addTrip)).getUseCount() + 1;
             tripList.get(tripList.indexOf(addTrip)).setUseCount(count);
@@ -129,14 +85,14 @@ public class TripsData {
     }
 
     //Метод для получения частых направлений поездок
-    public List<Trip> getFrequentTripsList(String direction, int numberOfFrequentTrips){
+    public List<Trip> getFrequentTripsList(String direction, int numberOfFrequentTrips) {
         List<Trip> frequentTrips = new ArrayList<>();
         for (UserTrip userTrip : allTrips) {
             Trip trip = new Trip(userTrip.getDirection(), userTrip.getCorrection());
-            if(direction == null) {
+            if (direction == null) {
                 addTrip(frequentTrips, trip);
-            }else {
-                if(userTrip.getDirection().equals(direction)) {
+            } else {
+                if (userTrip.getDirection().equals(direction)) {
                     addTrip(frequentTrips, trip);
                 }
             }
@@ -148,23 +104,17 @@ public class TripsData {
             }
         });
         if (numberOfFrequentTrips > 0 && numberOfFrequentTrips < frequentTrips.size()) {
-                return frequentTrips.subList(0, numberOfFrequentTrips);
+            return frequentTrips.subList(0, numberOfFrequentTrips);
         } else return frequentTrips;
     }
 
-    //Метод для получения полного множества вещей
+    //Метод для получения полного множества вещей с определением количества раз использования в поездках
     public List<Thing> getTingsList() {
         List<Thing> thingsList = new ArrayList<>();
         for (UserTrip userTrip : allTrips) {
             for (Thing thing : userTrip.getUserTripThings()) {
                 String key = (userTrip.getDirection() + "/" + userTrip.getCorrection()).toLowerCase();
                 if (thingsList.contains(thing)) {
-////                    thingsList.get(thingsList.indexOf(thing)).tagsList.add(userTrip.getDirection() + "/" + userTrip.getCorrection());
-////                    Integer entry = thingsList.get(thingsList.indexOf(thing)).tagsMap.get(key);
-//                    Thing thing1 = thingsList.get(thingsList.indexOf(thing));
-//                    Integer entry = thing1.tagsMap.get(key)
-//                    int entry1  = entry + 1;
-//                    thingsList.get(thingsList.indexOf(thing)).tagsMap.put(key,entry);
                     Thing extractedThing = thingsList.get(thingsList.indexOf(thing));
                     if (extractedThing.tagsMap.containsKey(key)) {
                         extractedThing.tagsMap.put(key, extractedThing.tagsMap.get(key) + 1);
@@ -172,7 +122,6 @@ public class TripsData {
                         extractedThing.tagsMap.put(key, 1);
                     }
                 } else {
-//                    thing.tagsList.add(userTrip.getDirection() + "/" + userTrip.getCorrection());
                     thing.tagsMap.put(key, 1);
                     thingsList.add(thing);
 

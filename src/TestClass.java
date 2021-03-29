@@ -2,11 +2,6 @@ import java.util.List;
 import java.util.Random;
 
 public class TestClass {
-    public static void main(String[] args) {
-
-
-    }
-
     PreparationToTrip pmt = new PreparationToTrip();
 
     public String printHello(){

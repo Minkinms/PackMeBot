@@ -6,33 +6,11 @@ import java.util.*;
 public class PackMeBot extends ProgwardsTelegramBot {
 
     public static void main(String[] args) {
-        System.out.println("Hello bot!");
         ApiContextInitializer.init();
-
         PackMeBot bot = new PackMeBot();
-//            bot.username = "Pizza24javabot";
-//            bot.token = "904923800:AAE5CjsVcpxBJfT_DG7u4T9rua42sa_nIkY";
         bot.username = "Pack_Me_bot";
         bot.token = "1611064894:AAHe1K2-x6p_40WzBpeCCpRsKZqLz1WOFnc";
-
-/*        //Приветствие. Старт
-        bot.addTags("поездка", "поездка, поздка, поездк, поезка, Поездка, Поздка, Поездк, Поезка, П");
-        bot.addTags("привет", "привет, Привет, здасьте, здравствуйте, добр, день, вечер, утро, hi, hello");
-        bot.addTags("конец", "конец, стоп, Конец, Стоп");
-        bot.addTags();  //TODO: Нужен модуль для добавления всех тэгов
-        bot.addTags("Командировка", "Командировка");
-        bot.addTags("Отпуск", "Отпуск");
-        bot.addTags("Природа", "Природа");
-        //
-        bot.addTags("Другой город", "Другой город");
-        bot.addTags("Другая страна", "Другая страна, Др");
-        bot.addTags("Кемпинг", "Кемпинг");
-        bot.addTags("Пикник", "Пикник");
-        bot.addTags("Россия", "Россия, россия, Р");
-
-//        bot.addTags("Паспорт", "Паспорт");
-        bot.addTags("Загранпаспорт", "Загранпаспорт");
-        bot.addTags("Соль", "Соль");*/
+        //TODO: Считывать данные бота из файла для безопасности учетных данных бота
 
             bot.start();
 //        bot.test();
@@ -41,24 +19,14 @@ public class PackMeBot extends ProgwardsTelegramBot {
 
     //переменные класса
     Map<Integer, PreparationToTrip> users = new HashMap<>();
-//    PreparationToTrip packMeToTrip = new PreparationToTrip();
-    PreparationToTrip packMeToTrip;
 
     @Override
     public String processMessage(Integer userid, String text) {
-//        FoundTags tags = checkTags(text);
-
-//        switch (packMeToTrip.stage){
-//            case CHOOSE_THINGS, CONTROL -> {return packMeToTrip.choose(text.trim());}
-//            default -> {return packMeToTrip.choose(getLastFound(tags));}
-//        }
-
         if(!users.containsKey(userid)){
             users.put(userid, new PreparationToTrip());
         }
         return users.get(userid).choose(text.trim());
-
-//        return packMeToTrip.choose(text.trim());
+        //TODO: Добавить удаление пользователей? Ввести enum.END, проверять и удалять
     }
 
 
@@ -66,8 +34,7 @@ public class PackMeBot extends ProgwardsTelegramBot {
     void test() {
     	Scanner in = new Scanner(System.in);
     	String input;
-    	String output;
-    	TUser user = new TUser();
+        TUser user = new TUser();
     	TestClass testClass = new TestClass();
         System.out.println("User: " + testClass.printHello());
         System.out.println(processMessage(user.userID, testClass.printHello()));
@@ -99,9 +66,6 @@ public class PackMeBot extends ProgwardsTelegramBot {
             } while (!input.equals("стоп"));
         }
     }
-
-
-
 
 }
     //Условный пользователь

@@ -3,8 +3,8 @@ import java.util.Objects;
 //Класс для описания поездки (по умолчанию)
 public class Trip {
     private String direction;           //Основное направление поездки, "куда"
-    private String correction;  //Уточнение направления поездки, "куда именно"
-    private int useCount;              //Количество использований направления
+    private String correction;          //Уточнение направления поездки, "куда именно"
+    private int useCount;               //Количество использований направления
 
     public Trip() {
     }
