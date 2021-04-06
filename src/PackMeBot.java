@@ -25,7 +25,7 @@ public class PackMeBot extends ProgwardsTelegramBot {
         if(!users.containsKey(userid)){
             users.put(userid, new PreparationToTrip());
         }
-        return users.get(userid).choose(text.trim());
+        return users.get(userid).getBotAnswer(text.trim());
         //TODO: Добавить удаление пользователей? Ввести enum.END, проверять и удалять
     }
 
@@ -36,6 +36,7 @@ public class PackMeBot extends ProgwardsTelegramBot {
     	String input;
         TUser user = new TUser();
     	TestClass testClass = new TestClass();
+/*
         System.out.println("User: " + testClass.printHello());
         System.out.println(processMessage(user.userID, testClass.printHello()));
 
@@ -59,12 +60,13 @@ public class PackMeBot extends ProgwardsTelegramBot {
                 System.out.println("\nUser: " + input);
                 System.out.println(processMessage(user.userID, input));
             }
+*/
 
             do {
                 input = in.nextLine();
                 System.out.println(processMessage(user.userID, input));
             } while (!input.equals("стоп"));
-        }
+//        }
     }
 
 }

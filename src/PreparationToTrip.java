@@ -21,26 +21,32 @@ public class PreparationToTrip {
     private List<String> nextList;                                  //Список для последующего выбора
     private TripsData tripsData;
     private UserTrip userTrip = new UserTrip();
+    private Map<String, Command> commandList = new HashMap();         //Список управляющих комманд
 
     //Конструктор класса
     public PreparationToTrip() {
         this.nextList = new ArrayList<>();
-        nextList.add("привет");
-        nextList.add("поездка");
-        nextList.add("/start");
-        this.stage = Stage.HELLO;                                       //Первая стадия сбора (Приветствие)
+//        nextList.add("привет");
+//        nextList.add("поездка");
+//        nextList.add("/start");
+        this.stage = Stage.DEFAULT_ANSWER;                                       //Первая стадия сбора (Приветствие)
         String tripHistoryPath = "C:\\Java\\Progwards\\PackMe\\src\\TripHistory.txt";
+        fillCommandList();
         checkConnectDataFile(tripHistoryPath);
+
     }
 
     //Этапы (стадии) сборов
     public enum Stage {
-        HELLO,                      //Стадия приветствия
+        DEFAULT_ANSWER,
+        START,
+        NEW,                      //Стадия приветствия
         CHOOSE_DEFAULT_DIRECTION,   //Стадия выбора первоначального направления
         CHOOSE_CORRECTION,          //Стадия выбора уточнения по направлению
         CHOOSE_THINGS,              //Стадия выбора вещей для направления
-        CONTROL,                    //Стадия контроля сбора вещей
-        ERROR                       //Ошибка
+        PACK_CONTROL,                    //Стадия контроля сбора вещей
+        ERROR,                      //Ошибка
+        HELP                        //Помощь
     }
 
     //Метод для проверки соединения с файлом базы данных
@@ -52,34 +58,159 @@ public class PreparationToTrip {
         }
     }
 
+    private void fillCommandList() {
+//        commandList.put("/start",new Command((Answer) null, () -> stage = Stage.START));
+        commandList.put("/start",new Command(this::doStart));
+        commandList.put("/stop",new Command(this::doStop));
+        commandList.put("/new",new Command(this::createNewDirection));
+        commandList.put("/help",new Command(this::doHelp));
+        commandList.put("/things",new Command(this::goToChooseThings));
+        commandList.put("/list",new Command(this::showSelectedThingsList));
+        commandList.put("/pack",new Command(this::goToPack));
+        commandList.put("/menu",new Command(this::showMenu));
+
+        //        commandList.add(new Command("/list", ));      //Показать список
+    }
+
     //Метод для организации взаимодействия с классом бота
-    public String choose(String text) {
-        if (text.trim().toLowerCase().equals("конец")) {
-            toStart();
-            return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
-        } else {
-            switch (stage) {
-                case HELLO -> {
-                    return doHelloStage(text);
-                }
-                case CHOOSE_DEFAULT_DIRECTION -> {
-                    return doChooseDirectionStage(text);
-                }
-                case CHOOSE_CORRECTION -> {
-                    return doChooseCorrectionStage(text);
-                }
-                case CHOOSE_THINGS -> {
-                    return correctSelectedThingsList(text);
-                }
-                case CONTROL -> {
-                    return control(text);
-                }
-                case ERROR -> {
-                    return "Извините, но работа временно невозможна :(";
-                }
+    public String getBotAnswer(String text) {
+//        if (text.trim().toLowerCase().equals("конец")) {
+//            toStart();
+//            return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
+        String userText = text.trim().toLowerCase();
+        if (userText.startsWith("/")) {
+            if(commandList.containsKey(userText)) {
+//                if (commandList.get(userText).answer != null) {
+                    return commandList.get(userText).answer.getAnswer();
+//                } else {
+//                    commandList.get(userText).action.doAction();
+//                }
+            }else {
+                return "Сожалею, но такой команды нет среди возможных :(\n" +
+                        commandList.get("/help").answer.getAnswer();
             }
         }
-        return "Не понял тебя. Попробуй еще раз";
+        return getAnswerFromStage(text);    //TODO: Передавать UserText? Проверить какой текст используется методами
+    }
+
+    private String getAnswerFromStage(String text) {
+        switch (stage) {
+//            case NEW -> {
+//                return doHelloStage(text);
+//            }
+            case CHOOSE_DEFAULT_DIRECTION -> {
+                return doChooseDirectionStage(text);
+            }
+            case CHOOSE_CORRECTION -> {
+                return doChooseCorrectionStage(text);
+            }
+            case CHOOSE_THINGS -> {
+                //return correctSelectedThingsList(text);
+                return checkMenuSymbol(text);
+            }
+            case PACK_CONTROL -> {
+                return control(text);
+            }
+            case ERROR -> {
+                return "Извините, но работа временно невозможна :(";
+            }
+            case DEFAULT_ANSWER -> {return "Что-то пошло не так." +
+                                    "\nПопробуй воспользоваться командами.\n" + doHelp();}
+        }
+//        }
+        return "Не понял тебя. Попробуй еще раз или используй команды:" +
+                doHelp();
+    }
+
+    //TODO: Дополнять перечень
+    private String doHelp(){
+        return "Перечень доступных команд:" +
+                "\n/help   - показать перечень доступных команд;" +
+                "\n/start  - приветствие;" +
+                "\n/stop   - остановить сбор;" +
+                "\n/new    - начать сбор в новую поездку;" +
+                "\n/things - перейти к стадии выбора вещей (для стадии упаковывания);" +
+                "\n/list   - показать список вещей (для стаий выбора вещей и упаковывания)" +
+                "\n/pack   - перейти к стадии упаковывания (для стадии выбора вещей);" +
+                "\n/menu   - список действий для корректировки списка вещей (для стадии выбора вещей).";
+    }
+
+    private String doStart(){
+        toStart();
+        return "Привет!\nЯ хочу помочь тебе собраться в поездку, " +
+                "подобрать нужные вещи и не забыть их сложить.\n" +
+                "Чтобы начать новый сбор введи /new, посмотреть все команды можно с помощью /help.";
+    }
+
+    private String doStop(){
+        toStart();
+        return "Подготовка к этой поездке завершена.\n" +
+                "Чтобы начать новый сбор введи /new, посмотреть все команды можно с помощью /help.";
+    }
+
+    private String goToChooseThings(){
+        if(stage == Stage.PACK_CONTROL || stage == Stage.CHOOSE_THINGS) {
+            stage = Stage.CHOOSE_THINGS;
+            return "Вы вернулись к дополнению списка вещей.\n" +
+                    "Посмотреть список можно спомощью /list, команды для корректировки списка смотри в /menu";
+        }else {
+            return "Команда предназначена для перехода к стадии выбора вещей из стадии их укладывания";
+        }
+    }
+
+    private String showSelectedThingsList(){
+        if(selectedThingsList != null && requestString.length() > 0){
+            return "Осталось сложить:\n" + getStringFromList(selectedThingsList) +
+                    "\nСложено:\n" + getStringFromList(tookThingsList);
+        }else {
+            return "Список пуст, так как еще не задано направление поездки.\n" +
+                    "Начните новый сбор с помощью /new";
+        }
+    }
+
+    private String goToPack(){
+        if(stage == Stage.PACK_CONTROL || stage == Stage.CHOOSE_THINGS) {
+            stage = Stage.PACK_CONTROL;
+            userTrip.setUserTripThings(selectedThingsList);
+            return "Готово! Давай ничего не забудем.\nПиши что сложено, а я буду вычеркивать.";
+        }else{
+            return "Команда предназначена для перехода к стадии укладывания вещей из стадии их выбора";
+        }
+    }
+
+    private String showMenu(){
+        if(stage == Stage.CHOOSE_THINGS) {
+            return "Список команд для корректирования списка вещей:\n" +
+                    "Добавить - \"+ Название (Категория)\";\n" +
+                    "Удалить - \"- Название\" или \"-номер в списке\"\n" +
+                    "Если готово, переходи к укладыванию /pack.";
+        }else{
+            return "Команда доступна при работе со списком вещей";
+        }
+    }
+
+
+    private String createNewDirection(){
+//        nextList.clear();
+        toStart();
+        nextList = getDirectionList();
+        stage = Stage.CHOOSE_DEFAULT_DIRECTION;
+        return "Привет! Куда собираешься? Предлагаю популярные варианты:\n" +
+                getStringFromList(nextList) +
+                "\nЕсли варианты не подходят, можешь ввести свой," +
+                "написав \"+Куда\" (Например, \"+ К бабушке\")";
+    }
+
+    //Сброс всех данных по поездке
+    private void toStart() {
+        stage = Stage.DEFAULT_ANSWER;
+        requestString = new StringBuilder();    //TODO: или удалять символы???
+        nextList.clear();
+//        nextList.add("привет");
+//        nextList.add("поездка");
+//        nextList.add("/start");
+        selectedThingsList.clear();
+        tookThingsList.clear();
     }
 
     //Подготовка к стадии приветствия (Stage.HELLO).
@@ -132,52 +263,55 @@ public class PreparationToTrip {
         }
         getSelectedThingsList(requestString.toString().toLowerCase());
         nextList.clear();
-        return "Отлично! Давай перейдем к вещам. Вот мой совет:\n" + getStringFromList(selectedThingsList) +
-                "\nЧтобы добавить пиши \"+ Название (Категория)\", удалить пиши \"- Название\".\n" +
-                "Если готово, пиши \"Готово\".";
-    }
-
-    //Сброс всех данных по поездке
-    private void toStart() {
-        stage = Stage.HELLO;
-        requestString = new StringBuilder();    //TODO: или удалять символы???
-        nextList.clear();
-        nextList.add("привет");
-        nextList.add("поездка");
-        nextList.add("/start");
-        selectedThingsList.clear();
-        tookThingsList.clear();
+        return "Отлично! Давай перейдем к вещам. Вот мой совет:\n" +
+                getStringFromList(selectedThingsList) + "\n" +
+                showMenu();
     }
 
     //Метод для контроля за сбором
     private String control(String text) {
         if (!text.isBlank()) {
-            if (text.trim().toLowerCase().equals("конец")) {
-                toStart();
-                return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
-            }
+//            if (text.trim().toLowerCase().equals("конец")) {
+//                toStart();
+//                return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
+//            }
             for (Thing thing : selectedThingsList) {
                 if (thing.getNameThing().trim().equalsIgnoreCase(text.trim())) {
                     moveTing(thing);
-                    if (selectedThingsList.isEmpty()) {
-                        toStart();
-                        try {
-                            tripsData.writeTrip(userTrip);
-                        } catch (IOException exc) {
-                            return "Всё собрано! Хорошей поездки!\n" +
-                                    "Произошла ошибка записи\n" +
-                                    "Чтобы начать новую, напиши \"Поездка\"";
-                        }
-                        return "Всё собрано! Хорошей поездки!\n" +
-                                "Чтобы начать новую, напиши \"Поездка\"";
-                    } else
+                    if (selectedThingsList.isEmpty()) {     //TODO: В отдельный метод
+                        return writeUserTrip();
+//                        toStart();
+//                        try {
+//                            tripsData.writeTrip(userTrip);
+//                        } catch (IOException exc) {
+//                            return "Всё собрано! Хорошей поездки!\n" +
+//                                    "Произошла ошибка записи\n" +
+//                                    "Чтобы начать новую, напиши \"Поездка\"";
+//                        }
+//                        return "Всё собрано! Хорошей поездки!\n" +
+//                                "Чтобы начать новую, напиши \"Поездка\"";
+                    } else {
                         return "Осталось сложить:\n" + getStringFromList(selectedThingsList) +
                                 "\nСложено:\n" + getStringFromList(tookThingsList);
+                    }
                 }
             }
             return "Не нашел такой вещи. Попробуй еще раз";
         } else
             return "Ничего не введено. Впиши название сложенной вещи";
+    }
+
+    private String writeUserTrip(){
+            toStart();
+            try {
+                tripsData.writeTrip(userTrip);
+            } catch (IOException exc) {
+                return "Всё собрано! Хорошей поездки!\n" +
+                        "Произошла ошибка записи\n" +
+                        "Чтобы начать новую, напиши /new";
+            }
+            return "Всё собрано! Хорошей поездки!\n" +
+                    "Чтобы начать новую, напиши /new";
     }
 
     //Метод для перемещения вещи из списка собираемых в список собраных
@@ -189,49 +323,50 @@ public class PreparationToTrip {
     }
 
     //Метод для корректировки списка выбарнных вещей
-    private String correctSelectedThingsList(String text) {
-        if (text.trim().toLowerCase().equals("готово")) {
-            stage = Stage.CONTROL;
-            userTrip.setUserTripThings(selectedThingsList);
-            return "Готово! Давай ничего не забудем.\nПиши что сложено, а я буду вычеркивать.";
-        } else {
-            if (text.trim().toLowerCase().equals("конец")) {
-                toStart();
-                return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
-            } else {
-                return checkMenuSymbol(text);
-            }
-        }
-    }
+//    private String correctSelectedThingsList(String text) {
+//        if (text.trim().toLowerCase().equals("готово")) {
+//            stage = Stage.PACK_CONTROL;
+//            userTrip.setUserTripThings(selectedThingsList);         //TODO: не забыть перенести в другие методы
+//            return "Готово! Давай ничего не забудем.\nПиши что сложено, а я буду вычеркивать.";
+//        } else {
+//            if (text.trim().toLowerCase().equals("конец")) {
+//                toStart();
+//                return "Подготовка к этой поездке завершена. Чтобы начать другую, напиши \"Поездка\"";
+//            } else {
+//                return checkMenuSymbol(text);
+//            }
+//        }
+//    }
 
-    //Метод для проверки специальных знаков для изменения списка вещей
+    //Метод для проверки специальных знаков и изменения списка вещей
     private String checkMenuSymbol(String text) {
         String menuSymbol = String.valueOf(text.charAt(0));     //TODO: использовать equals или ==
         if (menuSymbol.equals("+")) {
             if (addThing(text)) {
-                return "Добавлено.\nМожно продолжить добавлять или убирать.\n" +
-                        "Чтобы посмотреть весь список, введи \"0\"";
+                return "Добавлено.\nМожно продолжить добавлять или убирать (подсказки /menu).\n" +
+                        "Осталось сложить:\n" + getStringFromList(selectedThingsList) +
+                        "\nСложено:\n" + getStringFromList(tookThingsList);
             }
         }
         if (menuSymbol.equals("-")) {
             if (deleteThing(text)) {
-                return "Убрал.\nМожно продолжить добавлять или убирать.\n" +
-                        "Чтобы посмотреть весь список, введи \"0\"";
+                return "Убрал.\nМожно продолжить добавлять или убирать (подсказки /menu).\n" +
+                        "Осталось сложить:\n" + getStringFromList(selectedThingsList) +
+                        "\nСложено:\n" + getStringFromList(tookThingsList);
             }
         }
-        if (menuSymbol.equals("0")) {
-            return getStringFromList(selectedThingsList);
-        }
-        return "Не понял тебя. Попробуй еще раз." +
-                "\nЧтобы добавить пиши \"+ Название (Категория)\", удалить пиши \"- Название\".\n" +
-                "Если готово, пиши \"Готово\".";
+//        if (menuSymbol.equals("0")) {
+//            return getStringFromList(selectedThingsList);
+//        }
+        return "Не понял тебя.\n" +
+                showMenu();
     }
 
     //Метод для добавления вещи в список
     private boolean addThing(String text) {
         StringBuilder str = new StringBuilder(text);
         str.deleteCharAt(0);
-        StringTokenizer tokenizer = new StringTokenizer(str.toString().trim(), "()");
+        StringTokenizer tokenizer = new StringTokenizer(str.toString().trim(), "(");
         List<String> textParts = new ArrayList<>();
         while (tokenizer.hasMoreTokens()) {
             textParts.add(tokenizer.nextToken());
@@ -240,6 +375,12 @@ public class PreparationToTrip {
             selectedThingsList.add(new Thing(textParts.get(0).trim(), textParts.get(1).trim()));
             selectedThingsList.sort(categoryComparator);
             return true;
+        } else {
+            if (textParts.size() == 1) {
+                selectedThingsList.add(new Thing(textParts.get(0).trim(), "без категории"));
+                selectedThingsList.sort(categoryComparator);
+                return true;
+            }
         }
         return false;
     }
@@ -249,14 +390,33 @@ public class PreparationToTrip {
         StringBuilder str = new StringBuilder(text.toLowerCase());
         str.deleteCharAt(0);
         String deleteThingName = str.toString().trim();
-        for (Thing thing : selectedThingsList) {
-            if (thing.getNameThing().trim().equalsIgnoreCase(deleteThingName)) {
-                selectedThingsList.remove(thing);
-                selectedThingsList.sort(categoryComparator);
+        if (Character.isDigit(deleteThingName.charAt(0))) {           //Удаление по номеру
+            int index = getIndex(deleteThingName) - 1;
+            if (index < selectedThingsList.size()) {
+                selectedThingsList.remove(selectedThingsList.get(index));
                 return true;
+            }
+        } else {
+            for (Thing thing : selectedThingsList) {                //Удаление по имени вещи
+                if (thing.getNameThing().trim().equalsIgnoreCase(deleteThingName)) {
+                    selectedThingsList.remove(thing);
+                    selectedThingsList.sort(categoryComparator);
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    private int getIndex(String text) {
+        StringBuilder result = new StringBuilder();
+        char[] chars = text.toCharArray();
+        for (char aChar : chars) {
+            if (Character.isDigit(aChar)) {
+                result.append(aChar);
+            } else break;
+        }
+        return Integer.parseInt(result.toString());
     }
 
     //Множество вещей соответствующих запросу
@@ -308,7 +468,7 @@ public class PreparationToTrip {
 
     //Метод для формирования строки вывода из списка
     private String getStringFromList(List<?> list) {
-        if (list.size() > 0) {
+        if (list != null && list.size() > 0) {
             StringBuilder outputString = new StringBuilder("");
             for (int i = 0; i < list.size(); i++) {
                 if (i == list.size() - 1) {
@@ -324,6 +484,20 @@ public class PreparationToTrip {
     //Метод для автотеста
     public List<Thing> readSelectedThingsList() {
         return selectedThingsList;
+    }
+
+
+    //Класс для обработки команд
+    class Command {
+        private Answer answer;
+
+        public Command(Answer answer) {
+            this.answer = answer;
+        }
+    }
+
+    interface Answer {
+        String getAnswer();
     }
 
 }

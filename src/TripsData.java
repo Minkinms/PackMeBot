@@ -97,18 +97,14 @@ public class TripsData {
                 }
             }
         }
-        frequentTrips.sort(new Comparator<Trip>() {
-            @Override
-            public int compare(Trip o1, Trip o2) {
-                return Integer.compare(o2.getUseCount(), o1.getUseCount());
-            }
-        });
+        frequentTrips.sort((o1, o2) -> Integer.compare(o2.getUseCount(), o1.getUseCount()));
+
         if (numberOfFrequentTrips > 0 && numberOfFrequentTrips < frequentTrips.size()) {
             return frequentTrips.subList(0, numberOfFrequentTrips);
         } else return frequentTrips;
     }
 
-    //Метод для получения полного множества вещей с определением количества раз использования в поездках
+    //Метод для получения полного списка вещей с определением количества раз использования в поездках
     public List<Thing> getTingsList() {
         List<Thing> thingsList = new ArrayList<>();
         for (UserTrip userTrip : allTrips) {
@@ -124,7 +120,6 @@ public class TripsData {
                 } else {
                     thing.tagsMap.put(key, 1);
                     thingsList.add(thing);
-
                 }
             }
         }
