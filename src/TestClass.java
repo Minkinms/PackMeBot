@@ -4,6 +4,7 @@ import java.util.Random;
 public class TestClass {
     PreparationToTrip pmt = new PreparationToTrip();
 
+    //TODO: Требует изменения для ввода команд
     public String printHello(){
         return "привет";
     }

@@ -25,7 +25,7 @@ public class PackMeBot extends ProgwardsTelegramBot {
         if(!users.containsKey(userid)){
             users.put(userid, new PreparationToTrip());
         }
-        return users.get(userid).getBotAnswer(text.trim());
+        return users.get(userid).getBotAnswer(text.trim()) + "UserID" + userid;
         //TODO: Добавить удаление пользователей? Ввести enum.END, проверять и удалять
     }
 
